@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeuroWellness PRS — Architecture & Code Review</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 11px;
+    line-height: 1.6;
+    color: #1a1a2e;
+    background: #fff;
+  }
+
+  /* ── Cover Page ── */
+  .cover {
+    page-break-after: always;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #00A1E4 0%, #09172E 100%);
+    color: white;
+    text-align: center;
+    padding: 60px 40px;
+  }
+  .cover-badge {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 18px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+  }
+  .cover h1 {
+    font-size: 36px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    letter-spacing: -0.5px;
+  }
+  .cover h2 {
+    font-size: 18px;
+    font-weight: 300;
+    opacity: 0.85;
+    margin-bottom: 40px;
+  }
+  .cover-divider {
+    width: 60px;
+    height: 3px;
+    background: rgba(255,255,255,0.4);
+    margin: 30px auto;
+  }
+  .cover-meta {
+    font-size: 11px;
+    opacity: 0.7;
+    margin-top: 10px;
+  }
+  .cover-scores {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 40px;
+  }
+  .cover-score-item {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    padding: 14px 20px;
+    min-width: 110px;
+  }
+  .cover-score-item .label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.7;
+    margin-bottom: 4px;
+  }
+  .cover-score-item .score {
+    font-size: 22px;
+    font-weight: 800;
+  }
+  .cover-overall {
+    margin-top: 30px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 16px 40px;
+  }
+  .cover-overall .big {
+    font-size: 48px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .cover-overall .sub {
+    font-size: 12px;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ── Page Layout ── */
+  .page {
+    padding: 32px 44px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .page-break { page-break-before: always; }
+
+  /* ── TOC ── */
+  .toc {
+    page-break-after: always;
+  }
+  .toc-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #09172E;
+    border-bottom: 3px solid #00A1E4;
+    padding-bottom: 8px;
+    margin-bottom: 24px;
+  }
+  .toc-section {
+    margin-bottom: 6px;
+  }
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px dotted #e0e0e0;
+    font-size: 11px;
+  }
+  .toc-item .num { color: #00A1E4; font-weight: 700; margin-right: 8px; }
+  .toc-item .pg { color: #888; }
+  .toc-sub {
+    padding: 3px 0 3px 20px;
+    border-bottom: 1px dotted #f0f0f0;
+    font-size: 10px;
+    color: #555;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ── Section Headers ── */
+  .section-header {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #00A1E4;
+  }
+  .section-number {
+    font-size: 10px;
+    color: #00A1E4;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .section-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #09172E;
+    margin-top: 2px;
+  }
+  .score-pill {
+    display: inline-block;
+    background: linear-gradient(135deg, #00A1E4, #0077b6);
+    color: white;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
+  .score-pill.warn { background: linear-gradient(135deg, #f59e0b, #d97706); }
+  .score-pill.danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+  h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #09172E;
+    margin: 18px 0 8px;
+    padding-left: 10px;
+    border-left: 3px solid #00A1E4;
+  }
+  h4 {
+    font-size: 11px;
+    font-weight: 700;
+    color: #333;
+    margin: 12px 0 6px;
+  }
+
+  p { margin-bottom: 8px; font-size: 11px; }
+
+  /* ── Lists ── */
+  ul, ol {
+    margin: 6px 0 10px 18px;
+    font-size: 11px;
+  }
+  li { margin-bottom: 4px; line-height: 1.5; }
+  li strong { color: #09172E; }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 10px;
+  }
+  thead tr {
+    background: linear-gradient(135deg, #00A1E4, #09172E);
+    color: white;
+  }
+  thead th {
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 9.5px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  tbody tr:nth-child(even) { background: #f8fbff; }
+  tbody tr:hover { background: #e8f4fd; }
+  td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #e8e8e8;
+    vertical-align: top;
+  }
+
+  /* ── Code Blocks ── */
+  pre {
+    background: #0d1117;
+    color: #e6edf3;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 9.5px;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 10px 0;
+    border-left: 3px solid #00A1E4;
+  }
+  code {
+    background: #f0f7ff;
+    color: #0077b6;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 9.5px;
+  }
+  pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+  }
+
+  /* ── Callout Boxes ── */
+  .callout {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 12px 0;
+    font-size: 10.5px;
+  }
+  .callout-critical {
+    background: #fff0f0;
+    border-left: 4px solid #ef4444;
+    border: 1px solid #fecaca;
+    border-left: 4px solid #ef4444;
+  }
+  .callout-warning {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-left: 4px solid #f59e0b;
+  }
+  .callout-info {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-left: 4px solid #3b82f6;
+  }
+  .callout-success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-left: 4px solid #22c55e;
+  }
+  .callout-title {
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .callout-critical .callout-title { color: #ef4444; }
+  .callout-warning .callout-title { color: #f59e0b; }
+  .callout-info .callout-title { color: #3b82f6; }
+  .callout-success .callout-title { color: #22c55e; }
+
+  /* ── Severity Badges ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-critical { background: #fee2e2; color: #dc2626; }
+  .badge-high     { background: #ffedd5; color: #ea580c; }
+  .badge-medium   { background: #fef9c3; color: #854d0e; }
+  .badge-low      { background: #f0fdf4; color: #16a34a; }
+  .badge-good     { background: #e0f2fe; color: #0369a1; }
+
+  /* ── Two Column ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 12px 0;
+  }
+  .col-box {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .col-box h4 { margin-top: 0; }
+  .col-box.good { border-top: 3px solid #22c55e; }
+  .col-box.bad  { border-top: 3px solid #ef4444; }
+
+  /* ── Score Summary Card ── */
+  .score-summary {
+    background: linear-gradient(135deg, #09172E, #0d2137);
+    color: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 16px 0;
+  }
+  .score-summary h3 {
+    border-left: 3px solid #00A1E4;
+    color: white;
+    margin-top: 0;
+  }
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .score-cell {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .score-cell .s-label {
+    font-size: 8.5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.65;
+    margin-bottom: 4px;
+  }
+  .score-cell .s-val {
+    font-size: 20px;
+    font-weight: 800;
+    color: #00A1E4;
+  }
+  .score-cell .s-val.warn { color: #f59e0b; }
+  .score-cell .s-val.danger { color: #ef4444; }
+
+  /* ── Roadmap ── */
+  .roadmap {
+    margin: 12px 0;
+  }
+  .week {
+    margin-bottom: 16px;
+  }
+  .week-header {
+    background: linear-gradient(135deg, #00A1E4, #0077b6);
+    color: white;
+    padding: 8px 14px;
+    border-radius: 6px 6px 0 0;
+    font-weight: 700;
+    font-size: 11px;
+  }
+  .week-body {
+    background: #f8fbff;
+    border: 1px solid #bfdbfe;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    padding: 10px 14px;
+  }
+  .week-body li { font-size: 10.5px; }
+
+  /* ── Verdict Table ── */
+  .verdict-row td:first-child { font-weight: 700; }
+  .verdict-pass { color: #16a34a; font-weight: 700; }
+  .verdict-fail { color: #dc2626; font-weight: 700; }
+  .verdict-warn { color: #d97706; font-weight: 700; }
+
+  /* ── Footer ── */
+  @page {
+    margin: 0;
+    size: A4;
+  }
+  @media print {
+    .cover { min-height: 100vh; }
+    .page { padding: 28px 36px; }
+    pre { white-space: pre-wrap; word-wrap: break-word; }
+  }
+
+  .page-footer {
+    margin-top: 40px;
+    padding-top: 12px;
+    border-top: 1px solid #e0e0e0;
+    font-size: 9px;
+    color: #999;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ── Architecture Diagram ── */
+  .diagram {
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: 'Consolas', monospace;
+    font-size: 9.5px;
+    padding: 16px;
+    border-radius: 8px;
+    margin: 12px 0;
+    border-left: 3px solid #00A1E4;
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════ COVER ══ -->
+<div class="cover">
+  <div class="cover-badge">Confidential · Production Readiness Review</div>
+  <h1>NeuroWellness PRS</h1>
+  <h2>Complete Architecture &amp; Code Review</h2>
+  <div class="cover-divider"></div>
+
+  <div class="cover-scores">
+    <div class="cover-score-item"><div class="label">Architecture</div><div class="score">7/10</div></div>
+    <div class="cover-score-item"><div class="label">System Design</div><div class="score">6/10</div></div>
+    <div class="cover-score-item"><div class="label">Performance</div><div class="score">5.5/10</div></div>
+    <div class="cover-score-item"><div class="label">Security</div><div class="score" style="color:#fca5a5">4/10</div></div>
+    <div class="cover-score-item"><div class="label">Scalability</div><div class="score">6/10</div></div>
+    <div class="cover-score-item"><div class="label">Code Quality</div><div class="score">6.5/10</div></div>
+    <div class="cover-score-item"><div class="label">UI / UX</div><div class="score">6.5/10</div></div>
+  </div>
+
+  <div class="cover-overall">
+    <div class="big">58<span style="font-size:24px;opacity:0.6">/100</span></div>
+    <div class="sub">Overall Score · Advanced Junior / Early Mid-Level</div>
+  </div>
+
+  <div class="cover-meta" style="margin-top:30px">
+    Reviewed: May 2026 &nbsp;·&nbsp; Reviewer: Principal Frontend Architect &nbsp;·&nbsp; Stack: Next.js 14 · Redux Toolkit · TypeScript
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ TOC ══ -->
+<div class="page toc">
+  <div class="toc-title">Table of Contents</div>
+
+  <div class="toc-item"><span><span class="num">1.</span> Project Architecture</span><span class="pg">3</span></div>
+  <div class="toc-item"><span><span class="num">2.</span> System Design</span><span class="pg">4</span></div>
+  <div class="toc-item"><span><span class="num">3.</span> React / Frontend Best Practices</span><span class="pg">5</span></div>
+  <div class="toc-item"><span><span class="num">4.</span> Performance Audit</span><span class="pg">6</span></div>
+  <div class="toc-item"><span><span class="num">5.</span> UI / UX Architecture</span><span class="pg">7</span></div>
+  <div class="toc-item"><span><span class="num">6.</span> Security Review</span><span class="pg">8</span></div>
+  <div class="toc-item"><span><span class="num">7.</span> State Management Review</span><span class="pg">9</span></div>
+  <div class="toc-item"><span><span class="num">8.</span> Code Quality Review</span><span class="pg">10</span></div>
+  <div class="toc-item"><span><span class="num">9.</span> Scalability Assessment</span><span class="pg">11</span></div>
+  <div class="toc-item"><span><span class="num">10.</span> Industry Comparison</span><span class="pg">12</span></div>
+  <div class="toc-item" style="border-top:2px solid #00A1E4;margin-top:8px;padding-top:8px"><span><strong>Final Report &amp; Scores</strong></span><span class="pg">13</span></div>
+  <div class="toc-sub"><span>Critical Issues</span><span>13</span></div>
+  <div class="toc-sub"><span>Quick Wins</span><span>14</span></div>
+  <div class="toc-sub"><span>Medium Improvements</span><span>14</span></div>
+  <div class="toc-sub"><span>Major Refactors</span><span>15</span></div>
+  <div class="toc-sub"><span>30-Day Roadmap</span><span>15</span></div>
+  <div class="toc-sub"><span>File-by-File Suggestions</span><span>16</span></div>
+  <div class="toc-sub"><span>Final Verdict</span><span>16</span></div>
+
+  <div style="margin-top:30px" class="callout callout-info">
+    <div class="callout-title">About This Review</div>
+    This document is a production readiness assessment of the NeuroWellness Patient Rating System (PRS) frontend, a healthcare platform built with Next.js 14 App Router, Redux Toolkit, and TypeScript. The review covers architecture, security, performance, scalability, and code quality from the perspective of a Principal Frontend Architect preparing the codebase for production deployment.
+  </div>
+
+  <div class="callout callout-critical" style="margin-top:12px">
+    <div class="callout-title">⚠ HIPAA Notice</div>
+    This is a healthcare application handling Protected Health Information (PHI). Several findings in this review are not merely engineering best practices — they are potential HIPAA compliance violations. Section 6 (Security) must be treated as highest priority before any production deployment.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SEC 1 ══ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-number">Section 01</div>
+    <div class="section-title">Project Architecture <span class="score-pill">7 / 10</span></div>
+  </div>
+
+  <div class="two-col">
+    <div class="col-box good">
+      <h4>✓ Strengths</h4>
+      <ul>
+        <li>Route groups <code>(auth)</code> / <code>(roles)</code> cleanly separate public and protected shells — correct Next.js 14 pattern</li>
+        <li><code>lib/api/services/</code>, <code>lib/hooks/</code>, <code>types/</code>, <code>store/slices/</code> — genuine vertical separation of concerns</li>
+        <li>Barrel exports (<code>index.ts</code>) everywhere — clean, consistent imports</li>
+        <li><code>lib/constants/index.ts</code> — single source of truth for roles, routes, storage keys</li>
+        <li>CVA + Tailwind for UI system — industry-standard approach</li>
+        <li>Service layer completely abstracts HTTP from components</li>
+      </ul>
+    </div>
+    <div class="col-box bad">
+      <h4>✗ Issues</h4>
+      <ul>
+        <li>Zero tests — not even a <code>__tests__/</code> placeholder</li>
+        <li>No <code>.env.example</code> — impossible to bootstrap without asking someone</li>
+        <li><code>components/test/</code> mentioned but orphaned/empty</li>
+        <li><code>any</code> leaks: <code>rawUser: any</code> in <code>normalizeUser</code>, <code>as any</code> on roles — TypeScript strict mode partially defeated</li>
+        <li>No global error boundary in app shell</li>
+        <li><code>src/data/conditionMap.json</code> — static JSON committed to <code>src/</code>; should be in <code>public/</code> or a proper seeded query</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Folder Structure</h3>
+  <div class="diagram">src/
+├── app/                     ← Next.js 14 App Router (route groups)
+│   ├── (auth)/              ← Public: login, register
+│   └── (roles)/             ← Protected: admin, doctor, patient, receptionist, CA
+├── components/
+│   ├── ui/                  ← Reusable design-system components (Button, Card, etc)
+│   ├── assessment/          ← Domain: assessment flow components
+│   ├── questionnaire/       ← Domain: question rendering + inputs
+│   ├── layout/              ← Sidebar, Header
+│   └── providers/           ← AuthProvider (session restore)
+├── contexts/                ← SidebarContext (lightweight local state)
+├── store/                   ← Redux Toolkit (13 slices)
+├── lib/
+│   ├── api/                 ← Axios client + endpoints + service layer
+│   ├── hooks/               ← 15 custom hooks (one per domain)
+│   ├── constants/           ← Roles, routes, storage keys
+│   ├── validators/          ← Zod schemas (auth only)
+│   └── utils/               ← cn(), format helpers
+└── types/                   ← TypeScript type definitions (5 files)</div>
+
+  <h3>What Should Be Improved</h3>
+  <ul>
+    <li>Add <code>src/middleware.ts</code> for Next.js server-side route protection (currently all client-side)</li>
+    <li>Add <code>components/errors/ErrorBoundary.tsx</code> wrapping <code>(roles)/layout.tsx</code></li>
+    <li>Create <code>.env.example</code> documenting all environment variables</li>
+    <li>Replace <code>rawUser: any</code> with Zod schema validation on API response</li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SEC 2 ══ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-number">Section 02</div>
+    <div class="section-title">System Design <span class="score-pill warn">6 / 10</span></div>
+  </div>
+
+  <h3>Data Flow Architecture</h3>
+  <div class="diagram">User action → Custom Hook → Redux Thunk → Service → Axios → API Backend
+                                                                              ↓
+                     Component re-render ← Redux State ← Fulfilled Thunk ←──┘
+
+Route Entry: Page (container) → Feature Components (hooks) → UI Components (pure presentational)</div>
+
+  <h3>Component Hierarchy</h3>
+  <div class="diagram">RootLayout (StoreProvider + AuthProvider)
+  └─ (roles)/layout.tsx  [auth guard + SidebarProvider]
+       ├─ Sidebar (navigation, role-based links)
+       └─ main
+            └─ Page.tsx  [data fetching via hooks]
+                 └─ Feature Components  [useDoctor / usePatient / etc]
+                      └─ UI Components  [Button / Card / Input — pure]</div>
+
+  <h3>Critical Gaps</h3>
+  <table>
+    <thead><tr><th>Issue</th><th>Severity</th><th>Impact at Scale</th></tr></thead>
+    <tbody>
+      <tr><td>No refresh token implementation</td><td><span class="badge badge-critical">Critical</span></td><td>Users force-logged-out mid-assessment after token expiry</td></tr>
+      <tr><td><code>window.location.href</code> on 401</td><td><span class="badge badge-high">High</span></td><td>Bypasses Next.js router; full page reload; breaks back-button; can cause redirect loops</td></tr>
+      <tr><td>No pagination in list hooks</td><td><span class="badge badge-high">High</span></td><td>Doctors with 100+ patients fetch entire list on mount; unbounded API response</td></tr>
+      <tr><td>No WebSocket / real-time</td><td><span class="badge badge-medium">Medium</span></td><td>Notifications require manual refresh; not viable at 100K+ users</td></tr>
+      <tr><td>Authorization only at layout level</td><td><span class="badge badge-medium">Medium</span></td><td>No per-component or per-action RBAC; role check is coarse-grained</td></tr>
+      <tr><td>No optimistic updates</td><td><span class="badge badge-low">Low</span></td><td>Mutations feel slow; user waits for round-trip before UI updates</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Can This Scale to 100K+ Users?</h3>
+  <p>Frontend is CDN-deployable and stateless — yes, it can scale <em>horizontally</em>. The perceived scaling issues are API design gaps (no pagination) and UX gaps (no real-time), not fundamental architecture flaws. The backend carries the actual load.</p>
+  <p><strong>What fails first:</strong> Token expiry causing mass logouts during long sessions, then unbounded patient list fetches causing slow load times and memory bloat for power users.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SEC 3 ══ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-number">Section 03</div>
+    <div class="section-title">React / Frontend Best Practices <span class="score-pill warn">6.5 / 10</span></div>
+  </div>
+
+  <div class="two-col">
+    <div class="col-box good">
+      <h4>✓ Good Patterns</h4>
+      <ul>
+        <li><code>forwardRef</code> + <code>displayName</code> on <code>Button</code> — correct</li>
+        <li><code>useCallback</code> on all hook action handlers — correct</li>
+        <li><code>condition</code> in catalog thunks prevents duplicate fetches — excellent</li>
+        <li>CVA for component variants — right abstraction level</li>
+        <li>Custom hooks per domain, single responsibility</li>
+        <li>Typed Redux hooks in <code>store/hooks.ts</code></li>
+        <li>Service layer keeps components clean of HTTP logic</li>
+      </ul>
+    </div>
+    <div class="col-box bad">
+      <h4>✗ Anti-Patterns Found</h4>
+      <ul>
+        <li><code>useAuth.ts:12</code> uses raw <code>useDispatch&lt;AppDispatch&gt;</code> instead of <code>useAppDispatch</code></li>
+        <li><code>(roles)/layout.tsx:16</code> conflates login <code>isLoading</code> with session restore — causes incorrect PageLoader flash</li>
+        <li>6× <code>console.log</code> with PII in production thunk code</li>
+        <li>No <code>React.memo</code> on expensive layout components (Sidebar, Header)</li>
+        <li>No <code>Suspense</code> + <code>lazy()</code> for code splitting on any route</li>
+        <li>No <code>reselect</code> — catalog selectors return new refs on every dispatch</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Anti-Pattern: Inconsistent Typed Dispatch</h3>
+  <pre><code>// useAuth.ts:12 — CURRENT (inconsistent)
+const dispatch = useDispatch&lt;AppDispatch&gt;();
+
+// CORRECT — use the typed hook from store/hooks.ts
+const dispatch = useAppDispatch();</code></pre>
+
+  <h3>Anti-Pattern: Wrong Loading State in Layout Guard</h3>
+  <pre><code>// (roles)/layout.tsx:16 — CURRENT (bug)
+const waiting = isRestoring || isLoading;
+// isLoading = login button spinner — irrelevant during session restore
+// Causes brief PageLoader flash after login redirect
+
+// CORRECT
+const waiting = isRestoring;</code></pre>
+
+  <h3>Missing: React.memo on Layout Components</h3>
+  <pre><code>// Sidebar re-renders on ANY Redux dispatch because useAuth() re-runs
+// Fix: wrap with React.memo + stabilize auth selector
+
+export const Sidebar = React.memo(function Sidebar() {
+  // component body
+});</code></pre>
+
+  <h3>Missing: Route-Level Code Splitting</h3>
+  <pre><code>// Currently: all role code ships to every user
+// Fix: lazy-load page components
+
+import { lazy, Suspense } from 'react';
+const DoctorDashboard = lazy(() => import('./DoctorDashboard'));
+
+// In route file:
+&lt;Suspense fallback={&lt;PageLoader /&gt;}&gt;
+  &lt;DoctorDashboard /&gt;
+&lt;/Suspense&gt;</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SEC 4 ══ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-number">Section 04</div>
+    <div class="section-title">Performance Audit <span class="score-pill warn">5.5 / 10</span></div>
+  </div>
+
+  <h3>Issues Ranked by Impact</h3>
+
+  <div class="callout callout-critical">
+    <div class="callout-title">P0 — No Code Splitting by Role</div>
+    Every user role ships every route's code in one bundle. A patient downloads doctor, admin, CA, and receptionist bundles they will never use. Estimated overhead: <strong>30–40% excess JavaScript</strong>.
+    <pre style="margin-top:8px"><code>// Fix: dynamic imports per page
+const DoctorDashboard = dynamic(() =&gt; import('./DoctorDashboard'), { ssr: false });
+const AssessmentUI = dynamic(() =&gt; import('@/components/assessment/AssessmentUI'));</code></pre>
+  </div>
+
+  <div class="callout callout-critical">
+    <div class="callout-title">P0 — No Memoized Selectors</div>
+    All catalog selectors return unstable references. Any Redux dispatch causes re-render in every component using <code>selectScales</code>, <code>selectConditions</code>, etc., even if those values didn't change.
+    <pre style="margin-top:8px"><code>// CURRENT — new reference on every state change
+export const selectScales = (s: RootState) =&gt; s.catalog.scales;
+
+// FIX — stable reference via createSelector
+import { createSelector } from '@reduxjs/toolkit';
+export const selectScales = createSelector(
+  (s: RootState) =&gt; s.catalog.scales,
+  (scales) =&gt; scales
+);</code></pre>
+  </div>
+
+  <div class="callout callout-warning">
+    <div class="callout-title">P1 — window.location.href on 401 Causes Full Page Reload</div>
+    Forces complete React tree unmount + remount instead of client-side navigation. All in-memory state lost. Visible as a blank flash to the user.
+    <pre style="margin-top:8px"><code>// CURRENT — in client.ts:27
+window.location.href = '/login';
+
+// FIX — use Next.js router (requires passing router ref or using a singleton)
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+// OR: use a router singleton pattern, or dispatch an event to the auth slice</code></pre>
+  </div>
+
+  <div class="callout callout-warning">
+    <div class="callout-title">P1 — No Pagination on List Endpoints</div>
+    Patient lists, score history, notification feeds, and session lists load all records on mount. At 100+ records per user, this becomes a UX and memory problem. Add <code>skip</code>/<code>limit</code> parameters to all list service methods immediately.
+  </div>
+
+  <h3>Estimated Gains from P0+P1 Fixes</h3>
+  <table>
+    <thead><tr><th>Optimization</th><th>Metric</th><th>Estimated Gain</th></tr></thead>
+    <tbody>
+      <tr><td>Role-based code splitting</td><td>Initial bundle size</td><td>-25 to -35%</td></tr>
+      <tr><td>reselect + React.memo on Sidebar/Header</td><td>Re-render count</td><td>-40 to -60%</td></tr>
+      <tr><td>Lazy load AssessmentUI, QuestionRenderer</td><td>Time to interactive</td><td>-15 to -20%</td></tr>
+      <tr><td>Fix window.location.href → router</td><td>401 recovery time</td><td>Full reload → instant</td></tr>
+      <tr><td>Pagination on patient lists</td><td>API response time</td><td>-50 to -80% for power users</td></tr>
+    </tbody>
+  </table>
+
+  <h3>What Is Already Good</h3>
+  <ul>
+    <li><code>catalogSlice</code> TTL caching (30-min) with <code>condition</code> guard — eliminates redundant API calls for reference data</li>
+    <li>Skeleton loaders prevent layout shift during data fetching</li>
+    <li>Axios <code>timeout: 30000</code> prevents indefinite hanging requests</li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SEC 5 ══ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-number">Section 05</div>
+    <div class="section-title">UI / UX Architecture <span class="score-pill warn">6.5 / 10</span></div>
+  </div>
+
+  <div class="two-col">
+    <div class="col-box good">
+      <h4>✓ Design System Strengths</h4>
+      <ul>
+        <li>Custom component library in <code>components/ui/</code> — Button, Input, Card, Badge, Modal, Select, ProgressBar, Loader, Skeleton</li>
+        <li>CVA-based variants — consistent variant API across components</li>
+        <li>Tailwind with custom brand theme — single source for colours</li>
+        <li>Collapsible sidebar — respects available screen space</li>
+        <li>Skeleton loaders — avoids blank states during loading</li>
+        <li>VoiceMode + STT — differentiating UX feature for accessibility</li>
+        <li>Toast notifications via <code>react-hot-toast</code></li>
+      </ul>
+    </div>
+    <div class="col-box bad">
+      <h4>✗ Issues</h4>
+      <ul>
+        <li>No <code>aria-busy</code> when Button <code>isLoading=true</code></li>
+        <li>No <code>aria-label</code> patterns visible on icon-only buttons</li>
+        <li>No <code>role="alert"</code> on error messages — screen readers miss them</li>
+        <li>Hardcoded sidebar margin (<code>ml-64</code>) — broken on mobile without manual sidebar close</li>
+        <li>No per-page <code>&lt;title&gt;</code> / metadata — all tabs show generic title</li>
+        <li>No keyboard navigation in sidebar</li>
+        <li>No dark mode (<code>dark:</code> Tailwind variants unused)</li>
+        <li>Zod form validation only on auth forms — all other forms lack error feedback</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Accessibility Gaps</h3>
+  <pre><code>// Button.tsx — CURRENT
+&lt;button
+  className={cn(buttonVariants({ variant, size }), className)}
+  disabled={disabled || isLoading}
+  {...props}
+&gt;
+  {isLoading &amp;&amp; &lt;Loader2 className="h-3.5 w-3.5 animate-spin" /&gt;}
+  {children}
+&lt;/button&gt;
+
+// SHOULD BE
+&lt;button
+  aria-busy={isLoading}
+  aria-disabled={disabled || isLoading}
+  aria-label={isLoading ? `${props['aria-label'] ?? 'Loading'}…` : props['aria-label']}
+  disabled={disabled || isLoading}
+  ...
+&gt;</code></pre>
+
+  <h3>Responsive Layout Issue</h3>
+  <pre><code>// (roles)/layout.tsx — hardcoded px margins break on small screens
+&lt;main className={`${isCollapsed ? "ml-16" : "ml-64"} pt-16 p-6`}&gt;
+
+// Should use CSS Grid or CSS variables for sidebar width
+&lt;main style={{ marginLeft: 'var(--sidebar-width)' }} className="pt-16 p-6 transition-all"&gt;</code></pre>
+
+  <h3>Suggested Industry-Standard Improvements</h3>
+  <ul>
+    <li><strong>Add page-level metadata</strong> — Next.js <code>export const metadata</code> per page for accurate tab titles</li>
+    <li><strong>Focus management on modal open</strong> — trap focus inside modals; restore on close</li>
+    <li><strong>Keyboard-navigable sidebar</strong> — all nav links reachable via Tab + Enter</li>
+    <li><strong>Add Zod to all forms</strong> — AnamnesisForm, admin forms, staff forms all lack validation feedback</li>
+    <li><strong>Mobile-first responsive layout</strong> — sidebar collapses to drawer on small screens</li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SEC 6 ══ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-number">Section 06</div>
+    <div class="section-title">Security Review <span class="score-pill danger">4 / 10</span></div>
+  </div>
+
+  <div class="callout callout-critical">
+    <div class="callout-title">⚠ HIPAA Critical — Healthcare Application</div>
+    This application handles Protected Health Information (PHI) including patient diagnoses, assessment responses, medication history, and personal identifying information. Several issues below are not merely engineering concerns — they are potential HIPAA Security Rule violations.
+  </div>
+
+  <h3>Security Risk Register</h3>
+  <table>
+    <thead><tr><th>Risk</th><th>Severity</th><th>File / Location</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>PII logged to console</strong> — <code>credentials.email</code>, full auth response including tokens</td>
+        <td><span class="badge badge-critical">Critical</span></td>
+        <td><code>authSlice.ts:59,60,86</code></td>
+        <td>Delete all 6 console.log statements immediately</td>
+      </tr>
+      <tr>
+        <td><strong>Tokens in localStorage</strong> — accessible to any JavaScript on the page; XSS steals tokens trivially</td>
+        <td><span class="badge badge-critical">Critical</span></td>
+        <td><code>client.ts</code>, <code>authSlice.ts</code></td>
+        <td>Migrate to httpOnly cookies (requires backend coordination)</td>
+      </tr>
+      <tr>
+        <td><strong>No refresh token logic</strong> — access token expiry causes hard logout during long assessment sessions</td>
+        <td><span class="badge badge-high">High</span></td>
+        <td><code>client.ts:20-31</code></td>
+        <td>Implement token refresh queue in Axios interceptor</td>
+      </tr>
+      <tr>
+        <td><strong>No server-side route guard</strong> — <code>middleware.ts</code> missing; protected pages accessible via direct URL before client JS loads</td>
+        <td><span class="badge badge-high">High</span></td>
+        <td><code>src/middleware.ts</code> (missing)</td>
+        <td>Create Next.js middleware to validate session cookie server-side</td>
+      </tr>
+      <tr>
+        <td><strong>No CSP headers</strong> — no Content-Security-Policy; XSS has full DOM access</td>
+        <td><span class="badge badge-high">High</span></td>
+        <td><code>next.config.js</code></td>
+        <td>Add <code>headers()</code> config with strict CSP</td>
+      </tr>
+      <tr>
+        <td><strong>User PII in Redux DevTools</strong> — browser extension can read full store including medical history, user data</td>
+        <td><span class="badge badge-medium">Medium</span></td>
+        <td><code>store.ts</code></td>
+        <td>Disable Redux DevTools in production builds</td>
+      </tr>
+      <tr>
+        <td><strong>rawUser: any</strong> — no Zod validation on backend API response; attacker-controlled shape goes directly into Redux store</td>
+        <td><span class="badge badge-medium">Medium</span></td>
+        <td><code>authSlice.ts:16</code></td>
+        <td>Validate response with Zod schema before <code>normalizeUser</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Immediate Fix: Remove PII Logs (authSlice.ts)</h3>
+  <pre><code>// DELETE these lines from authSlice.ts:
+console.log("Attempting login with:", credentials.email);  // Line 59 — PII
+console.log("Login response:", response);                  // Line 60 — token exposure
+console.log("Login successful, returning user:", normalizedUser); // Line 86 — PII
+console.log("Login error:", error);                        // Line 88
+console.log("Error message:", errorMessage);               // Line 99</code></pre>
+
+  <h3>Recommended Security Headers (next.config.js)</h3>
+  <pre><code>const securityHeaders = [
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=()' },
+  {
+    key: 'Content-Security-Policy',
+    value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+  },
+];
+// Add to module.exports headers() function</code></pre>
+
+  <h3>Disable Redux DevTools in Production</h3>
+  <pre><code>// store.ts
+configureStore({
+  reducer: { ... },
+  devTools: process.env.NODE_ENV !== 'production',
+})</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SEC 7 ══ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-number">Section 07</div>
+    <div class="section-title">State Management Review <span class="score-pill">7 / 10</span></div>
+  </div>
+
+  <h3>Redux Architecture Overview</h3>
+  <table>
+    <thead><tr><th>Slice</th><th>Purpose</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td><code>authSlice</code></td><td>User authentication, login/register thunks</td><td><span class="badge badge-good">Keep in Redux</span></td></tr>
+      <tr><td><code>questionnaireSlice</code></td><td>Question navigation, response state machine</td><td><span class="badge badge-good">Keep — complex sync state</span></td></tr>
+      <tr><td><code>catalogSlice</code></td><td>TTL-cached reference data (scales, conditions, clinics)</td><td><span class="badge badge-good">Keep — excellent pattern</span></td></tr>
+      <tr><td><code>sessionSlice</code></td><td>PRS session management</td><td><span class="badge badge-good">Keep in Redux</span></td></tr>
+      <tr><td><code>patientsSlice</code></td><td>Patient list and detail</td><td><span class="badge badge-good">Keep in Redux</span></td></tr>
+      <tr><td><code>permissionsSlice</code></td><td>Assessment permissions</td><td><span class="badge badge-good">Keep in Redux</span></td></tr>
+      <tr><td><code>notificationsSlice</code></td><td>Simple fetch + display</td><td><span class="badge badge-medium">Migrate to React Query</span></td></tr>
+      <tr><td><code>doctorNotesSlice</code></td><td>Simple GET + single upsert</td><td><span class="badge badge-medium">Migrate to React Query</span></td></tr>
+      <tr><td><code>alertsSlice</code></td><td>Read-only alert list</td><td><span class="badge badge-medium">Migrate to React Query</span></td></tr>
+      <tr><td><code>scoresSlice</code></td><td>Score queries, no mutations</td><td><span class="badge badge-medium">Migrate to React Query</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Recommendation: Hybrid Redux + React Query</div>
+    Keep complex, cross-role state (auth, questionnaire, catalog, sessions, patients) in Redux where shared mutable state and thunk coordination is needed. Migrate simple fetch-and-display slices (notifications, doctorNotes, alerts, scores) to React Query. This would eliminate ~4-5 slices of boilerplate and their associated reducers, thunks, and loading state management.
+  </div>
+
+  <h3>Missing: Memoized Selectors</h3>
+  <pre><code>// CURRENT — unstable reference on every state update
+export const selectScales = (s: RootState) =&gt; s.catalog.scales;
+export const selectScalesById = (s: RootState) =&gt; s.catalog.scalesById;
+
+// FIX — stable references; component only re-renders when data actually changes
+import { createSelector } from '@reduxjs/toolkit';
+
+export const selectScales = createSelector(
+  (s: RootState) =&gt; s.catalog,
+  (catalog) =&gt; catalog.scales
+);
+
+export const selectScaleById = (id: string) =&gt; createSelector(
+  selectScalesById,
+  (byId) =&gt; byId[id]
+);</code></pre>
+
+  <h3>Issue: Conflated Loading State in authSlice</h3>
+  <p><code>authSlice.isLoading</code> is used for both login and register operations. A failed register leaves <code>isLoading: false</code> correctly, but the state is shared — there is no way to distinguish "login is loading" from "register is loading" from consuming components.</p>
+  <pre><code>// Fix: separate loading flags
+interface AuthState {
+  loginLoading: boolean;
+  registerLoading: boolean;
+  // ... rest
+}</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SEC 8 ══ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-number">Section 08</div>
+    <div class="section-title">Code Quality Review <span class="score-pill warn">6.5 / 10</span></div>
+  </div>
+
+  <div class="two-col">
+    <div class="col-box good">
+      <h4>✓ What's Good</h4>
+      <ul>
+        <li>TypeScript strict mode enabled — solid foundation</li>
+        <li>Centralized constants — no magic strings in components</li>
+        <li>Service layer with clear, consistent method naming</li>
+        <li>Zod validation on auth forms</li>
+        <li><code>cn()</code> utility (clsx + tailwind-merge) — correct pattern</li>
+        <li><code>Button</code> component: CVA, forwardRef, displayName, loading state — well-written</li>
+        <li>Consistent PascalCase components, camelCase hooks, SCREAMING_SNAKE constants</li>
+        <li>Barrel exports throughout — clean import paths</li>
+      </ul>
+    </div>
+    <div class="col-box bad">
+      <h4>✗ Technical Debt</h4>
+      <ul>
+        <li><code>rawUser: any</code> in <code>normalizeUser</code> — no type safety on backend response shape</li>
+        <li><code>as any</code> cast on roles array (authSlice.ts:27)</li>
+        <li>6× production <code>console.log</code> with PII and tokens</li>
+        <li><code>useDispatch&lt;AppDispatch&gt;</code> in useAuth instead of <code>useAppDispatch</code></li>
+        <li>Unknown role falls through to CA_DASHBOARD silently — should throw or log warning</li>
+        <li>Error messages hardcoded in multiple places (approval gate strings duplicated)</li>
+        <li>No tests — zero coverage</li>
+        <li>No <code>.env.example</code> file</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Technical Debt Summary</h3>
+  <table>
+    <thead><tr><th>Location</th><th>Issue</th><th>Priority</th></tr></thead>
+    <tbody>
+      <tr><td><code>authSlice.ts:16</code></td><td><code>normalizeUser(rawUser: any)</code> — no Zod schema on API response</td><td><span class="badge badge-high">High</span></td></tr>
+      <tr><td><code>authSlice.ts:27</code></td><td><code>as any</code> cast to silence TypeScript on roles array</td><td><span class="badge badge-medium">Medium</span></td></tr>
+      <tr><td><code>authSlice.ts:59-99</code></td><td>6× <code>console.log</code> with PII + token data in production thunk</td><td><span class="badge badge-critical">Critical</span></td></tr>
+      <tr><td><code>useAuth.ts:12</code></td><td><code>useDispatch&lt;AppDispatch&gt;</code> instead of <code>useAppDispatch</code></td><td><span class="badge badge-low">Low</span></td></tr>
+      <tr><td><code>useAuth.ts:40</code></td><td>Unknown role silently falls back to CA_DASHBOARD — no warning</td><td><span class="badge badge-medium">Medium</span></td></tr>
+      <tr><td><code>(roles)/layout.tsx:16</code></td><td><code>isLoading</code> included in <code>waiting</code> — wrong loading state</td><td><span class="badge badge-medium">Medium</span></td></tr>
+      <tr><td>Multiple thunks</td><td><code>restoreSession</code> doesn't validate token expiry — stale token hits 401 on first API call</td><td><span class="badge badge-high">High</span></td></tr>
+      <tr><td>All forms except auth</td><td>No Zod validation schemas — AnamnesisForm, admin forms, staff forms</td><td><span class="badge badge-medium">Medium</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Fix: Validate API Response Before normalizeUser</h3>
+  <pre><code>import { z } from 'zod';
+
+const RawUserSchema = z.object({
+  id: z.string().optional(),
+  user_id: z.string().optional(),
+  email: z.string().email(),
+  first_name: z.string().optional(),
+  last_name: z.string().optional(),
+  full_name: z.string().optional(),
+  roles: z.array(z.string()).optional(),
+  role: z.string().optional(),
+  approval_status: z.string().optional(),
+  clinic_id: z.string().optional(),
+  // ...
+});
+
+function normalizeUser(rawUser: unknown): User {
+  const validated = RawUserSchema.parse(rawUser); // throws if malformed
+  // ... rest of normalization using validated (typed)
+}</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SEC 9 ══ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-number">Section 09</div>
+    <div class="section-title">Scalability Assessment <span class="score-pill warn">6 / 10</span></div>
+  </div>
+
+  <table>
+    <thead><tr><th>Scale</th><th>Frontend Verdict</th><th>What Breaks First</th><th>Prevention</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>10K users</strong></td>
+        <td><span class="badge badge-good">✓ Works as-is</span></td>
+        <td>Nothing frontend-critical</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><strong>100K users</strong></td>
+        <td><span class="badge badge-medium">⚠ Needs work</span></td>
+        <td>Unbounded list fetches; token expiry mid-session; no real-time notifications</td>
+        <td>Add pagination; implement token refresh; add WebSocket for notifications</td>
+      </tr>
+      <tr>
+        <td><strong>1M users</strong></td>
+        <td><span class="badge badge-critical">✗ Not ready</span></td>
+        <td>No WebSocket; no service worker/offline mode; no bundle splitting; no CDN asset strategy; notification polling at scale</td>
+        <td>Full performance audit; service workers; role-based code splitting; CDN; real-time backend</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>What Fails First at 100K Users</h3>
+  <ol>
+    <li><strong>Pagination gap</strong> — A doctor with 200 patients loads all 200 on every dashboard mount. At 100K users with 20 doctors each having 200 patients, you have 4M patient records being fetched in full lists.</li>
+    <li><strong>Token expiry</strong> — Access tokens expire (typically 30–60 mins) with no refresh logic. Patients filling a 60-question assessment get force-logged-out mid-session, losing all answers. At scale, this creates support ticket floods.</li>
+    <li><strong>Notification polling</strong> — Without WebSocket, every notification check is a new HTTP request. At 100K concurrent users polling every N minutes, this is millions of requests/hour for a simple read operation.</li>
+  </ol>
+
+  <h3>Assessment Data Loss — Critical UX Issue at Any Scale</h3>
+  <p>The questionnaire state lives only in Redux memory. A network drop, browser refresh, or accidental tab close during a 30-minute multi-scale assessment destroys all answers. The state shape in <code>questionnaireSlice</code> is already perfect for persistence — it just needs to be written to localStorage on every <code>setAnswer</code>.</p>
+  <pre><code>// questionnaireSlice.ts — add localStorage persistence
+setAnswer: (state, action) =&gt; {
+  const { scaleId, questionIndex, value } = action.payload;
+  if (!state.responses[scaleId]) state.responses[scaleId] = {};
+  state.responses[scaleId][String(questionIndex)] = value;
+
+  // Persist draft to localStorage to prevent data loss on network drop
+  if (state.sessionId) {
+    localStorage.setItem(
+      `prs_draft_${state.sessionId}`,
+      JSON.stringify(state.responses)
+    );
+  }
+},</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SEC 10 ══ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-number">Section 10</div>
+    <div class="section-title">Industry Comparison <span class="score-pill warn">6 / 10</span></div>
+  </div>
+
+  <table>
+    <thead><tr><th>Standard</th><th>Verdict</th><th>Gap Analysis</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Startup MVP</strong></td>
+        <td><span class="verdict-pass">✓ Passes</span></td>
+        <td>Architecture is solid enough to ship and iterate on. The foundation is correct.</td>
+      </tr>
+      <tr>
+        <td><strong>Mid-level engineer</strong></td>
+        <td><span class="verdict-pass">✓ Passes</span></td>
+        <td>Structure, Redux patterns, custom hooks, service layer — all above average junior work.</td>
+      </tr>
+      <tr>
+        <td><strong>Senior engineer</strong></td>
+        <td><span class="verdict-warn">⚠ Borderline</span></td>
+        <td>Missing: token refresh, error boundaries, tests, security hardening, console.log cleanup. A senior would not ship without these.</td>
+      </tr>
+      <tr>
+        <td><strong>FAANG-level</strong></td>
+        <td><span class="verdict-fail">✗ Fails</span></td>
+        <td>Missing: full test coverage, accessibility audit, performance budget, CI/CD pipeline, observability (Sentry, analytics), E2E tests, proper RBAC middleware, API contract validation.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Current Developer Level Assessment</h3>
+  <div class="callout callout-info">
+    <div class="callout-title">Advanced Junior → Early Mid-Level Engineer</div>
+    The architecture decisions are <em>senior-informed</em> — route groups, service layer, catalog TTL caching, custom hooks per domain, CVA design system, TypeScript strict mode. These are patterns learned from reading good codebases and applying them correctly. The execution gaps (no tests, security issues, console.log in prod code, no refresh token, no error boundaries) are mid-level oversights — the kind that come from shipping fast without a production checklist. This is a team that has seen good code but hasn't shipped production healthcare software before. The foundations are worth building on.
+  </div>
+
+  <h3>What a Senior Engineer Would Do Differently</h3>
+  <ul>
+    <li>Write tests before or alongside features, not as a future task</li>
+    <li>Never commit <code>console.log</code> with credentials, tokens, or user PII</li>
+    <li>Token refresh on day one — not after the first user gets logged out mid-session</li>
+    <li>Error boundaries everywhere before calling any component "done"</li>
+    <li>Zod schema validation on every external boundary (API responses, URL params, form inputs)</li>
+    <li>Disable Redux DevTools in production builds</li>
+    <li>Server-side middleware for auth — never rely solely on client-side guards</li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ FINAL REPORT ══ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-number">Final Report</div>
+    <div class="section-title">Scores &amp; Verdict</div>
+  </div>
+
+  <div class="score-summary">
+    <h3>Overall Project Rating</h3>
+    <div class="score-grid">
+      <div class="score-cell"><div class="s-label">Architecture</div><div class="s-val">7/10</div></div>
+      <div class="score-cell"><div class="s-label">System Design</div><div class="s-val warn">6/10</div></div>
+      <div class="score-cell"><div class="s-label">Performance</div><div class="s-val warn">5.5/10</div></div>
+      <div class="score-cell"><div class="s-label">Security</div><div class="s-val danger">4/10</div></div>
+      <div class="score-cell"><div class="s-label">Scalability</div><div class="s-val warn">6/10</div></div>
+      <div class="score-cell"><div class="s-label">Code Quality</div><div class="s-val warn">6.5/10</div></div>
+      <div class="score-cell"><div class="s-label">UI / UX</div><div class="s-val warn">6.5/10</div></div>
+      <div class="score-cell" style="background:rgba(0,161,228,0.2);border-color:rgba(0,161,228,0.4)">
+        <div class="s-label">Overall</div>
+        <div class="s-val" style="font-size:26px">58/100</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Critical Issues — Fix Before Launch</h3>
+  <ol>
+    <li><strong>Delete all <code>console.log</code> from <code>authSlice.ts</code></strong> — logs PII + auth tokens in production (lines 59, 60, 86, 88, 98, 99)</li>
+    <li><strong>Implement token refresh</strong> — no refresh = users force-logged-out during 30-60 min assessment sessions</li>
+    <li><strong>Add <code>src/middleware.ts</code></strong> — server-side route protection; currently only client-side guards exist</li>
+    <li><strong>Add CSP headers to <code>next.config.js</code></strong> — no XSS mitigation at the HTTP layer</li>
+    <li><strong>Disable Redux DevTools in production</strong> — user PHI visible to browser extensions in prod</li>
+  </ol>
+
+  <h3>Production Readiness Score: 5/10</h3>
+  <p>Core functionality is solid and ships working features. Security gaps and lack of error resilience prevent production deployment in a healthcare context without remediation.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ QUICK WINS ══ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-number">Action Plan</div>
+    <div class="section-title">Quick Wins, Medium &amp; Major Improvements</div>
+  </div>
+
+  <h3>Quick Wins — Under 1 Hour Each</h3>
+  <table>
+    <thead><tr><th>Task</th><th>File</th><th>Effort</th></tr></thead>
+    <tbody>
+      <tr><td>Delete 6× <code>console.log</code> with PII/tokens</td><td><code>authSlice.ts:59,60,86,88,98,99</code></td><td>5 min</td></tr>
+      <tr><td>Replace <code>useDispatch&lt;AppDispatch&gt;</code> with <code>useAppDispatch</code></td><td><code>useAuth.ts:12</code></td><td>2 min</td></tr>
+      <tr><td>Fix <code>waiting</code> — remove <code>isLoading</code> from it</td><td><code>(roles)/layout.tsx:16</code></td><td>2 min</td></tr>
+      <tr><td>Add <code>aria-busy={isLoading}</code> to Button</td><td><code>components/ui/Button.tsx</code></td><td>5 min</td></tr>
+      <tr><td>Disable Redux DevTools in production</td><td><code>store/store.ts</code></td><td>2 min</td></tr>
+      <tr><td>Create <code>.env.example</code> with all env vars</td><td>root</td><td>10 min</td></tr>
+      <tr><td>Replace <code>window.location.href</code> → router pattern on 401</td><td><code>lib/api/client.ts:27</code></td><td>20 min</td></tr>
+      <tr><td>Add security headers to <code>next.config.js</code></td><td><code>next.config.js</code></td><td>15 min</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Medium Improvements — 1–2 Days Each</h3>
+  <table>
+    <thead><tr><th>Task</th><th>Impact</th></tr></thead>
+    <tbody>
+      <tr><td>Add <code>reselect</code> <code>createSelector</code> to all catalog selectors</td><td>Performance — eliminates spurious re-renders</td></tr>
+      <tr><td>Add <code>React.memo</code> to <code>Sidebar</code> and <code>Header</code></td><td>Performance — -40% re-renders on these heavy components</td></tr>
+      <tr><td>Add <code>lazy()</code> + <code>Suspense</code> to all route page components</td><td>Performance — -25 to -35% initial bundle size</td></tr>
+      <tr><td>Extend Zod validation to AnamnesisForm, admin forms, staff forms</td><td>UX + correctness — consistent error feedback</td></tr>
+      <tr><td>Add Zod schema validation on <code>normalizeUser</code> input (eliminate <code>any</code>)</td><td>Security + type safety</td></tr>
+      <tr><td>Implement pagination in <code>useDoctor</code>, <code>usePatient</code>, <code>useStaff</code></td><td>Performance — prevents unbounded data fetches</td></tr>
+      <tr><td>Add global <code>ErrorBoundary</code> wrapping <code>(roles)/layout.tsx</code></td><td>Stability — prevents blank white screens on JS errors</td></tr>
+      <tr><td>Add assessment draft persistence to localStorage in <code>questionnaireSlice</code></td><td>UX — prevents data loss on network drop</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Major Refactors — 1+ Week Each</h3>
+  <ol>
+    <li><strong>Token refresh infrastructure</strong> — axios interceptor queue pattern; retry on 401; refresh endpoint integration; fallback logout if refresh fails. Requires backend coordination for refresh endpoint.</li>
+    <li><strong>httpOnly cookie auth</strong> — migrate from localStorage to httpOnly cookies for token storage. Most impactful security fix. Requires backend to set <code>Set-Cookie</code> headers. Eliminates XSS token theft.</li>
+    <li><strong>Test suite</strong> — Jest + React Testing Library for all Redux slices, selectors, and custom hooks. Cypress for critical E2E flows: login→assessment→results, doctor→manage patients, admin→manage clinics.</li>
+    <li><strong>Bundle splitting by role</strong> — dynamic imports so patient bundle excludes doctor/admin/CA code. Estimated -30% initial load for all roles.</li>
+    <li><strong>Migrate notification/notes/alerts/scores slices to React Query</strong> — eliminates ~4-5 slices of boilerplate; adds automatic background refetching, stale-while-revalidate, and retry logic for free.</li>
+    <li><strong>Add Sentry error monitoring</strong> — captures JS errors, API failures, and performance traces in production. Essential for a healthcare app where silent failures can have patient safety implications.</li>
+  </ol>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ ROADMAP ══ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-number">Roadmap</div>
+    <div class="section-title">30-Day Improvement Plan</div>
+  </div>
+
+  <div class="roadmap">
+    <div class="week">
+      <div class="week-header">Week 1 — Security &amp; Stability (HIPAA Blockers)</div>
+      <div class="week-body">
+        <ul>
+          <li>Remove all <code>console.log</code> statements with PII from <code>authSlice.ts</code></li>
+          <li>Add <code>src/middleware.ts</code> with server-side auth + role guard</li>
+          <li>Add CSP and security headers to <code>next.config.js</code></li>
+          <li>Fix <code>window.location.href</code> → Next.js router on 401</li>
+          <li>Implement token refresh interceptor in <code>lib/api/client.ts</code></li>
+          <li>Disable Redux DevTools in production builds</li>
+          <li>Create <code>.env.example</code> with all required environment variables</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="week">
+      <div class="week-header">Week 2 — Performance &amp; Correctness</div>
+      <div class="week-body">
+        <ul>
+          <li>Add <code>reselect</code> <code>createSelector</code> to catalog, auth, and patient selectors</li>
+          <li>Wrap <code>Sidebar</code> and <code>Header</code> with <code>React.memo</code></li>
+          <li>Fix <code>(roles)/layout.tsx</code> — remove <code>isLoading</code> from <code>waiting</code></li>
+          <li>Add Zod schema to <code>normalizeUser</code> — eliminate <code>rawUser: any</code></li>
+          <li>Add pagination (<code>skip</code>/<code>limit</code>) to all list service methods and hooks</li>
+          <li>Add global <code>ErrorBoundary</code> component wrapping the roles layout</li>
+          <li>Add assessment draft save to localStorage in <code>questionnaireSlice</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="week">
+      <div class="week-header">Week 3 — Testing Foundation</div>
+      <div class="week-body">
+        <ul>
+          <li>Unit tests for <code>authSlice</code>, <code>catalogSlice</code>, <code>questionnaireSlice</code></li>
+          <li>Unit tests for <code>useAuth</code>, <code>useCatalog</code>, <code>useQuestionnaire</code></li>
+          <li>Integration test for complete login flow end-to-end</li>
+          <li>Cypress E2E: patient login → assessment → results submission</li>
+          <li>Cypress E2E: doctor login → view patient → grant assessment</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="week">
+      <div class="week-header">Week 4 — UX, Observability &amp; Performance</div>
+      <div class="week-body">
+        <ul>
+          <li>Add Sentry for production error tracking and performance monitoring</li>
+          <li>Add <code>lazy()</code> + <code>Suspense</code> to all route-level page components</li>
+          <li>Accessibility pass on auth forms, Button, sidebar navigation</li>
+          <li>Add per-page <code>metadata</code> (Next.js) for accurate browser tab titles</li>
+          <li>Add <code>aria-busy</code> and <code>aria-label</code> to interactive UI components</li>
+          <li>Review and extend Zod validation to all non-auth forms</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>File-by-File Priority Summary</h3>
+  <table>
+    <thead><tr><th>File</th><th>Required Action</th><th>Priority</th></tr></thead>
+    <tbody>
+      <tr><td><code>src/store/slices/authSlice.ts</code></td><td>Delete 6× console.logs; add Zod to normalizeUser; separate loginLoading/registerLoading; fix <code>as any</code> cast</td><td><span class="badge badge-critical">Critical</span></td></tr>
+      <tr><td><code>src/lib/api/client.ts</code></td><td>Replace <code>window.location.href</code> with router; add token refresh queue logic</td><td><span class="badge badge-critical">Critical</span></td></tr>
+      <tr><td><code>src/middleware.ts</code> (create)</td><td>Server-side auth + role guard for all <code>(roles)/</code> routes</td><td><span class="badge badge-high">High</span></td></tr>
+      <tr><td><code>next.config.js</code></td><td>Add CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy headers</td><td><span class="badge badge-high">High</span></td></tr>
+      <tr><td><code>src/store/store.ts</code></td><td>Disable DevTools in production</td><td><span class="badge badge-high">High</span></td></tr>
+      <tr><td><code>src/lib/hooks/useAuth.ts</code></td><td>Use <code>useAppDispatch</code>; fix unknown role fallback; token expiry check in <code>restoreSession</code></td><td><span class="badge badge-medium">Medium</span></td></tr>
+      <tr><td><code>src/app/(roles)/layout.tsx</code></td><td>Remove <code>isLoading</code> from <code>waiting</code>; add ErrorBoundary wrapper</td><td><span class="badge badge-medium">Medium</span></td></tr>
+      <tr><td><code>src/store/slices/catalogSlice.ts</code></td><td>Already excellent — add <code>createSelector</code> to exported selectors</td><td><span class="badge badge-low">Low</span></td></tr>
+      <tr><td><code>src/components/ui/Button.tsx</code></td><td>Add <code>aria-busy</code>, <code>aria-label</code> support for accessibility</td><td><span class="badge badge-low">Low</span></td></tr>
+      <tr><td><code>.env.example</code> (create)</td><td>Document all required environment variables with descriptions</td><td><span class="badge badge-medium">Medium</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VERDICT ══ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-number">Final Verdict</div>
+    <div class="section-title">Production Review Assessment</div>
+  </div>
+
+  <table>
+    <thead><tr><th>Review Level</th><th>Result</th><th>Reasoning</th></tr></thead>
+    <tbody class="verdict-row">
+      <tr>
+        <td>Startup Review</td>
+        <td><span class="verdict-pass">✓ PASSES</span></td>
+        <td>Architecture is solid, features work, codebase is maintainable. Sufficient to ship an MVP and iterate. The structural decisions — route groups, service layer, Redux Toolkit, custom hooks — are all correct and above-average for a startup context.</td>
+      </tr>
+      <tr>
+        <td>Senior Engineer Review</td>
+        <td><span class="verdict-warn">⚠ CONDITIONAL</span></td>
+        <td>Passes if Week 1 security issues are resolved first: remove PII logs, add middleware.ts, implement token refresh, add CSP headers. The architecture foundations would satisfy a senior reviewer. The current security gaps would not.</td>
+      </tr>
+      <tr>
+        <td>FAANG Review</td>
+        <td><span class="verdict-fail">✗ FAILS</span></td>
+        <td>Fails on: zero test coverage, no observability (Sentry), no accessibility audit, no performance budget enforcement, no CI/CD pipeline, incomplete RBAC (layout-only guards), no API contract validation, no offline resilience.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-success" style="margin-top:24px">
+    <div class="callout-title">Bottom Line</div>
+    This is a well-architected healthcare platform written by someone who has studied modern React patterns and applied them correctly. The service layer, custom hooks, Redux Toolkit usage, and route group organization all reflect exposure to good codebases. What is missing is <em>operational maturity</em> — the production hardening layer that separates engineers who have shipped healthcare software from those who have built it. The security gaps must be treated as blockers. The performance and testing gaps are important but can follow in the weeks after launch. The foundations are correct and worth building on. Estimated remediation effort to reach production readiness: <strong>3–4 focused weeks</strong>.
+  </div>
+
+  <div class="page-footer">
+    <span>NeuroWellness PRS — Architecture &amp; Code Review</span>
+    <span>Confidential · May 2026</span>
+    <span>Principal Frontend Architect</span>
+  </div>
+</div>
+
+</body>
+</html>

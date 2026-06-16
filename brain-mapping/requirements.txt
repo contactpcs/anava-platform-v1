@@ -1,0 +1,16 @@
+mne
+numpy
+pandas
+matplotlib
+nibabel
+mne-connectivity
+defusedxml
+python-docx
+reportlab
+fastapi
+uvicorn[standard]
+python-multipart
+pyvista
+boto3
+httpx
+python-dotenv

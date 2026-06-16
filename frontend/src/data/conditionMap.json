@@ -1,0 +1,131 @@
+{
+    "version": "2.0.0",
+    "lastUpdated": "2026-02-11",
+    "conditions": {
+        "depression-anxiety": {
+            "label": "Depression/Anxiety",
+            "description": "Assessment battery for mood and anxiety disorders",
+            "scales": ["EQ-5D-5L", "BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "MADRS", "PSQI"]
+        },
+        "chronic-pain": {
+            "label": "Chronic Pain",
+            "description": "Comprehensive chronic pain assessment",
+            "scales": ["EQ-5D-5L", "BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "PSQI", "EDSS", "Pain-Rating-Scale", "LANSS"]
+        },
+        "fibromyalgia": {
+            "label": "Fibromyalgia",
+            "description": "Fibromyalgia impact and symptom assessment",
+            "scales": ["EQ-5D-5L", "BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "PSQI", "VAS-Pain", "FSS", "Pain-Rating-Scale", "LANSS", "FIQR"]
+        },
+        "migraine": {
+            "label": "Migraine",
+            "description": "Migraine disability and pain assessment",
+            "scales": ["EQ-5D-5L", "BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "PSQI", "MIDAS", "Pain-Rating-Scale"]
+        },
+        "ataxia": {
+            "label": "Ataxia",
+            "description": "Ataxia severity and balance assessment",
+            "scales": ["EQ-5D-5L", "BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "PSQI", "DHI", "SARA", "VVAS-Ataxia"]
+        },
+        "after-stroke-tbi": {
+            "label": "After Stroke/TBI",
+            "description": "Post-stroke and traumatic brain injury assessment",
+            "scales": ["BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "PSQI", "GPCOG", "KPS", "SS-QOL", "MAS", "MRC", "Barthel-Index", "LANSS"]
+        },
+        "dementia": {
+            "label": "Dementia",
+            "description": "Cognitive impairment and dementia assessment",
+            "scales": ["EQ-5D-5L", "BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "PSQI", "GPCOG", "AMTS", "DSRS", "GDS", "IADL"]
+        },
+        "parkinsons-disease": {
+            "label": "Parkinson's Disease",
+            "description": "Parkinson's disease comprehensive assessment",
+            "scales": ["BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "PSQI", "SARA", "DHI", "GPCOG", "PFS-16", "LANSS"]
+        },
+        "tinnitus": {
+            "label": "Tinnitus",
+            "description": "Tinnitus severity and quality of life assessment",
+            "scales": ["EQ-5D-5L", "BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "PSQI", "THI"]
+        },
+        "insomnia": {
+            "label": "Insomnia",
+            "description": "Sleep disorders and insomnia assessment",
+            "scales": ["EQ-5D-5L", "BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "PSQI", "AIS", "FFS", "SLEEP-50"]
+        },
+        "multiple-sclerosis": {
+            "label": "Multiple Sclerosis",
+            "description": "Multiple sclerosis comprehensive assessment",
+            "scales": ["EQ-5D-5L", "BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "PSQI", "EDSS", "GPCOG", "DHI", "SARA", "MFIS", "Barthel-Index"]
+        },
+        "adhd": {
+            "label": "ADHD",
+            "description": "Attention deficit hyperactivity disorder assessment",
+            "scales": ["EQ-5D-5L", "BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "PSQI", "ASRSv1.1", "SNAP-IV", "PANS-31"]
+        },
+        "als": {
+            "label": "ALS",
+            "description": "Amyotrophic lateral sclerosis assessment",
+            "scales": ["EQ-5D-5L", "BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "PSQI", "EDSS", "MAS", "ALSFRS-R"]
+        },
+        "irritable-bowel-disease": {
+            "label": "Irritable Bowel Disease",
+            "description": "Irritable bowel syndrome and GI assessment",
+            "scales": ["EQ-5D-5L", "BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "PSQI", "Pain-Rating-Scale", "HDRS"]
+        },
+        "autism-spectrum-disorders": {
+            "label": "Autism Spectrum Disorders",
+            "description": "Autism spectrum disorder screening and assessment",
+            "scales": ["EQ-5D-5L", "BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "PSQI", "RAADS-14", "PANS-31"]
+        },
+        "addiction-disorders": {
+            "label": "Addiction Disorders",
+            "description": "Substance use and addiction assessment",
+            "scales": ["EQ-5D-5L", "BPQ-Short-Form", "PHQ-9", "DASS-21", "GAD-7", "PSQI", "AUDIT"]
+        }
+    },
+    "scaleMetadata": {
+        "EQ-5D-5L": { "name": "EuroQol 5-Dimension 5-Level", "category": "quality-of-life" },
+        "BPQ-Short-Form": { "name": "BPQ-20 Autonomic Symptoms", "category": "autonomic" },
+        "PHQ-9": { "name": "Patient Health Questionnaire-9", "category": "depression" },
+        "DASS-21": { "name": "Depression Anxiety Stress Scales-21", "category": "mood" },
+        "GAD-7": { "name": "Generalized Anxiety Disorder-7", "category": "anxiety" },
+        "MADRS": { "name": "Montgomery-Asberg Depression Rating Scale", "category": "depression" },
+        "PSQI": { "name": "Pittsburgh Sleep Quality Index", "category": "sleep" },
+        "EDSS": { "name": "Expanded Disability Status Scale", "category": "disability" },
+        "Pain-Rating-Scale": { "name": "Pain Rating Scale", "category": "pain" },
+        "LANSS": { "name": "Leeds Assessment of Neuropathic Symptoms and Signs", "category": "pain" },
+        "VAS-Pain": { "name": "Visual Analog Scale for Pain", "category": "pain" },
+        "FSS": { "name": "Fatigue Severity Scale", "category": "fatigue" },
+        "FIQR": { "name": "Revised Fibromyalgia Impact Questionnaire", "category": "fibromyalgia" },
+        "MIDAS": { "name": "Migraine Disability Assessment", "category": "migraine" },
+        "DHI": { "name": "Dizziness Handicap Inventory", "category": "vestibular" },
+        "SARA": { "name": "Scale for Assessment and Rating of Ataxia", "category": "ataxia" },
+        "VVAS-Ataxia": { "name": "Visual Vertigo Analogue Scale for Ataxia", "category": "ataxia" },
+        "GPCOG": { "name": "General Practitioner Assessment of Cognition", "category": "cognitive" },
+        "KPS": { "name": "Karnofsky Performance Status", "category": "functional" },
+        "SS-QOL": { "name": "Stroke Specific Quality of Life Scale", "category": "stroke" },
+        "MAS": { "name": "Modified Ashworth Scale", "category": "spasticity" },
+        "MRC": { "name": "Medical Research Council Muscle Strength Scale", "category": "strength" },
+        "Barthel-Index": { "name": "Barthel Index of Activities of Daily Living", "category": "functional" },
+        "AMTS": { "name": "Abbreviated Mental Test Score", "category": "cognitive" },
+        "DSRS": { "name": "Dementia Severity Rating Scale", "category": "dementia" },
+        "GDS": { "name": "Global Deterioration Scale", "category": "dementia" },
+        "IADL": { "name": "Instrumental Activities of Daily Living", "category": "functional" },
+        "PFS-16": { "name": "Parkinson Fatigue Scale-16", "category": "fatigue" },
+        "THI": { "name": "Tinnitus Handicap Inventory", "category": "tinnitus" },
+        "AIS": { "name": "Athens Insomnia Scale", "category": "sleep" },
+        "FFS": { "name": "Flinders Fatigue Scale", "category": "fatigue" },
+        "SLEEP-50": { "name": "SLEEP-50 Questionnaire", "category": "sleep" },
+        "MFIS": { "name": "Modified Fatigue Impact Scale", "category": "fatigue" },
+        "ASRSv1.1": { "name": "Adult ADHD Self-Report Scale v1.1", "category": "adhd" },
+        "SNAP-IV": { "name": "Swanson, Nolan, and Pelham Rating Scale-IV", "category": "adhd" },
+        "PANS-31": { "name": "Psychiatric Assessment of Neurological Symptoms-31", "category": "psychiatric" },
+        "ALSFRS-R": { "name": "ALS Functional Rating Scale Revised", "category": "als" },
+        "HDRS": { "name": "Hamilton Depression Rating Scale", "category": "depression" },
+        "RAADS-14": { "name": "Ritvo Autism Asperger Diagnostic Scale-14", "category": "autism" },
+        "AUDIT": { "name": "Alcohol Use Disorders Identification Test", "category": "addiction" },
+        "DN4": { "name": "Douleur Neuropathique 4", "category": "pain" },
+        "COMPASS-31": { "name": "Composite Autonomic Symptom Score-31", "category": "autonomic" },
+        "BDI-II": { "name": "Beck Depression Inventory II", "category": "depression" }
+    }
+}

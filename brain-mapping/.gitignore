@@ -1,0 +1,47 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# EEG data files
+*.nedf
+*.edf
+*.fif
+*.set
+*.cnt
+
+# Analysis outputs
+results/
+*.pdf
+*.docx
+
+# Patient data / reports (never commit)
+*Report*/
+*report*/
+
+# Static build
+static/
+
+# MNE data cache
+~/mne_data/
+.mne/
+
+# OS
+.DS_Store
+Thumbs.db
