@@ -28,6 +28,8 @@ async def upload_report(
     request: Request,
     file: UploadFile = File(..., description="PDF file (max 20 MB)"),
     patient_id: str = Form(...),
+    clinic_id: str = Form(...),
+    country: str = Form("india"),
     session_id: Optional[str] = Form(None),
     report_name: str = Form(...),
     report_type: str = Form("EEG_ANALYSIS"),
@@ -35,7 +37,7 @@ async def upload_report(
     svc: EEGReportService = Depends(_svc),
 ):
     """Upload a PDF EEG report and store metadata in TimescaleDB."""
-    report = await svc.upload_report(file, patient_id, session_id, report_name, report_type)
+    report = await svc.upload_report(file, patient_id, clinic_id, country, session_id, report_name, report_type)
     return success_response(report.model_dump(mode="json"), "Report uploaded successfully", 201)
 
 

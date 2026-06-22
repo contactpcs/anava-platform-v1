@@ -54,8 +54,11 @@ def _get_s3_client():
     return boto3.client("s3", **kwargs)
 
 
-def _s3_key(patient_id: str, report_uuid: str) -> str:
-    return f"eeg_reports/{patient_id}/{report_uuid}.pdf"
+def _s3_key(patient_id: str, report_uuid: str, clinic_id: str, country: str) -> str:
+    import datetime
+    year = datetime.datetime.utcnow().year
+    country_slug = country.lower().replace(" ", "_")
+    return f"countries/{country_slug}/clinics/{clinic_id}/patients/{patient_id}/eeg_reports/{year}/{report_uuid}.pdf"
 
 
 def _upload_to_s3(key: str, content: bytes) -> None:
@@ -100,6 +103,8 @@ class EEGReportService:
         self,
         file: UploadFile,
         patient_id: str,
+        clinic_id: str,
+        country: str,
         session_id: Optional[str],
         report_name: str,
         report_type: str = "EEG_ANALYSIS",
@@ -121,7 +126,7 @@ class EEGReportService:
 
         version = (await self._repo.get_latest_version(patient_id, report_name)) + 1
         report_uuid = str(uuid.uuid4())
-        s3_key = _s3_key(patient_id, report_uuid)
+        s3_key = _s3_key(patient_id, report_uuid, clinic_id, country)
 
         try:
             _upload_to_s3(s3_key, content)
@@ -184,6 +189,8 @@ class EEGReportService:
         self,
         pdf_path: Path,
         patient_id: str,
+        clinic_id: str,
+        country: str,
         session_id: Optional[str],
         report_name: str,
         report_type: str = "EEG_ANALYSIS",
@@ -205,7 +212,7 @@ class EEGReportService:
 
         version = (await self._repo.get_latest_version(patient_id, report_name)) + 1
         report_uuid = str(uuid.uuid4())
-        s3_key = _s3_key(patient_id, report_uuid)
+        s3_key = _s3_key(patient_id, report_uuid, clinic_id, country)
 
         try:
             _upload_to_s3(s3_key, content)

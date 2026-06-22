@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     TSDB_DATABASE_URL: str = "postgres://tsdbadmin:k4220hmly8g8jsed@gguyvxc03b.oiyo0zj1k9.tsdb.cloud.timescale.com:35472/tsdb?sslmode=require"
 
     # S3 storage (EEG report PDFs)
-    S3_BUCKET_NAME: str = "neurowellness-eeg-reports"
+    S3_BUCKET_NAME: str = "neurowellness-prod-bucket"
     AWS_REGION: str = "ap-south-1"
     # Leave empty on EC2 — IAM instance role provides credentials automatically
     AWS_ACCESS_KEY_ID: Optional[str] = None

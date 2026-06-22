@@ -74,6 +74,8 @@ def index():
 async def analyze(
     file: UploadFile = File(...),
     patient_id: str = Form(...),
+    clinic_id: str = Form(...),
+    country: str = Form("india"),
     session_id: Optional[str] = Form(None),
     report_name: Optional[str] = Form(None),
 ):
@@ -94,11 +96,15 @@ async def analyze(
 
     derived_report_name = report_name or nedf_path.stem
 
+    country_slug = country.lower().replace(" ", "_")
+
     jobs[job_id] = {
         "status": "queued",
         "step": "Queued — waiting for worker",
         "file": file.filename,
         "patient_id": patient_id,
+        "clinic_id": clinic_id,
+        "country": country_slug,
         "session_id": session_id,
         "report_name": derived_report_name,
         "outputs": [],
@@ -107,7 +113,7 @@ async def analyze(
         "error": None,
     }
 
-    _executor.submit(_run_analysis, job_id, nedf_path, job_dir, patient_id, session_id, derived_report_name)
+    _executor.submit(_run_analysis, job_id, nedf_path, job_dir, patient_id, clinic_id, country_slug, session_id, derived_report_name)
     return {"job_id": job_id}
 
 
@@ -152,10 +158,12 @@ def _get_s3_client():
     return boto3.client("s3", **kwargs)
 
 
-def _upload_pdf_to_s3(pdf_path: Path, patient_id: str, report_uuid: str) -> tuple[str, int, str]:
+def _upload_pdf_to_s3(pdf_path: Path, patient_id: str, report_uuid: str, clinic_id: str, country: str) -> tuple[str, int, str]:
     """Upload PDF to S3, return (s3_key, file_size_bytes, sha256_checksum)."""
+    import datetime
     content = pdf_path.read_bytes()
-    s3_key = f"eeg_reports/{patient_id}/{report_uuid}.pdf"
+    year = datetime.datetime.utcnow().year
+    s3_key = f"countries/{country}/clinics/{clinic_id}/patients/{patient_id}/eeg_reports/{year}/{pdf_path.stem}_{report_uuid}.pdf"
     checksum = hashlib.sha256(content).hexdigest()
     s3 = _get_s3_client()
     s3.put_object(
@@ -206,6 +214,8 @@ def _run_analysis(
     nedf_path: Path,
     job_dir: Path,
     patient_id: str,
+    clinic_id: str,
+    country: str,
     session_id: Optional[str],
     report_name: str,
 ) -> None:
@@ -298,7 +308,7 @@ def _run_analysis(
             rtype = _infer_report_type(pdf.name)
             report_uuid = str(uuid.uuid4())
             try:
-                s3_key, file_size, checksum = _upload_pdf_to_s3(pdf, patient_id, report_uuid)
+                s3_key, file_size, checksum = _upload_pdf_to_s3(pdf, patient_id, report_uuid, clinic_id, country)
             except Exception as exc:
                 _warn(job_id, f"S3 upload failed for {pdf.name}: {exc}")
                 continue
