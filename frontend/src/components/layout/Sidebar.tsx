@@ -10,7 +10,7 @@ import { authService } from "@/lib/api/services";
 import {
   LayoutDashboard, Users, ClipboardList,
   UserCircle, LogOut, Brain, ChevronLeft, Menu, Calendar, CalendarDays,
-  ClipboardCheck, MapPin, Building2, UserCog, Settings,
+  ClipboardCheck, MapPin, Building2, UserCog, Settings, Bell,
 } from "lucide-react";
 
 const NAV_ITEMS: Record<string, Array<{ label: string; href: string; icon: React.ElementType }>> = {
@@ -28,11 +28,12 @@ const NAV_ITEMS: Record<string, Array<{ label: string; href: string; icon: React
     { label: "Profile",      href: "/doctor/profile",      icon: UserCircle },
   ],
   clinical_assistant: [
-    { label: "Dashboard",   href: "/clinical-assistant/dashboard",            icon: LayoutDashboard },
-    { label: "Appt. Reqs.", href: "/clinical-assistant/appointment-requests", icon: CalendarDays },
-    { label: "All Patients",href: "/clinical-assistant/patients",             icon: Users },
-    { label: "Approvals",   href: "/clinical-assistant/approvals",            icon: ClipboardCheck },
-    { label: "Profile",     href: "/clinical-assistant/profile",              icon: UserCircle },
+    { label: "Dashboard",    href: "/clinical-assistant/dashboard",    icon: LayoutDashboard },
+    { label: "Appointments", href: "/clinical-assistant/appointments", icon: CalendarDays },
+    { label: "Patients",     href: "/clinical-assistant/patients",     icon: Users },
+    { label: "Alerts",       href: "/clinical-assistant/alerts",       icon: Bell },
+    { label: "Schedule",     href: "/clinical-assistant/schedule",     icon: Calendar },
+    { label: "Profile",      href: "/clinical-assistant/profile",      icon: UserCircle },
   ],
   receptionist: [
     { label: "Dashboard",   href: "/receptionist/dashboard",            icon: LayoutDashboard },

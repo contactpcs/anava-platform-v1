@@ -10,7 +10,7 @@ from app.limiter import limiter
 from app.socket_io.server import mount_socketio
 from app.socket_io import events as _socket_events  # noqa: F401 — registers connect/disconnect handlers
 from app.scheduler.scheduler import start_scheduler, shutdown_scheduler
-from app.routers import auth, doctors, patients, notifications, staff, users, doctor_notes, admin, consent
+from app.routers import auth, doctors, patients, notifications, staff, users, doctor_notes, admin, consent, clinical_assistant
 from app.routers import appointments, appointment_requests, doctor_schedule, eeg_reports
 from app.routers.prs import scales, conditions, permissions, assessment, scores, questions
 from app.routers.anamnesis import assessment as anamnesis_assessment
@@ -59,6 +59,7 @@ app.include_router(doctors.router,       prefix=f"{PREFIX}/doctors",         tag
 app.include_router(patients.router,      prefix=f"{PREFIX}/patients",        tags=["patients"])
 app.include_router(notifications.router, prefix=f"{PREFIX}/notifications",   tags=["notifications"])
 app.include_router(staff.router,         prefix=f"{PREFIX}/staff",           tags=["staff"])
+app.include_router(clinical_assistant.router, prefix=f"{PREFIX}/clinical-assistant", tags=["clinical-assistant"])
 app.include_router(anamnesis_assessment.router, prefix=f"{PREFIX}/anamnesis",   tags=["anamnesis"])
 app.include_router(scales.router,        prefix=f"{PREFIX}/prs/scales",      tags=["prs-scales"])
 app.include_router(conditions.router,    prefix=f"{PREFIX}/prs/conditions",  tags=["prs-conditions"])

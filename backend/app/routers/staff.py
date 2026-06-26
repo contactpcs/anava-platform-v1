@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Query, Request, HTTPException
 from typing import Optional
 from pydantic import BaseModel, EmailStr
-from app.dependencies import require_staff, require_receptionist, _invalidate_profile_cache
+from app.dependencies import require_receptionist, _invalidate_profile_cache
 from app.database import get_supabase_admin
 from app.utils.responses import success_response, paginated_response
 from app.utils.exceptions import NotFoundError, BadRequestError, ForbiddenError
@@ -53,9 +53,8 @@ async def _allocate_doctor(admin, city: Optional[str], state: Optional[str], cli
 
 @router.get("/dashboard")
 @limiter.limit("60/minute")
-async def staff_dashboard(request: Request, current_user: dict = Depends(require_staff)):
+async def staff_dashboard(request: Request, current_user: dict = Depends(require_receptionist)):
     admin = get_supabase_admin()
-    role = current_user["role"]
     clinic_id = current_user.get("clinic_id")
 
     q = admin.table("patients").select("id")
@@ -82,39 +81,22 @@ async def staff_dashboard(request: Request, current_user: dict = Depends(require
         today_q = today_q.eq("clinic_id", clinic_id)
     registered_today = len((await today_q.execute()).data or [])
 
-    extra = {}
-    if role == "receptionist":
-        upcoming_q = admin.table("sessions").select("id, session_date, status, patient_id, doctor_id").in_(
-            "status", ["scheduled", "in_progress"]
-        ).order("session_date", desc=False).limit(5)
-        if clinic_id:
-            upcoming_q = upcoming_q.eq("clinic_id", clinic_id)
-        extra["upcoming_sessions"] = (await upcoming_q.execute()).data or []
-
-    elif role == "clinical_assistant":
-        recent_instances_q = admin.table("prs_assessment_instances").select(
-            "instance_id, patient_id, status, started_at, completed_at"
-        ).eq("status", "completed").order("completed_at", desc=True).limit(5)
-        if clinic_id:
-            recent_instances_q = recent_instances_q.eq("clinic_id", clinic_id)
-        recent_instances = (await recent_instances_q.execute()).data or []
-        instance_ids = [i["instance_id"] for i in recent_instances]
-        recent_scores = []
-        if instance_ids:
-            recent_scores = (await admin.table("prs_final_results").select(
-                "calculated_value, max_possible, overall_severity_label, time_stamp"
-            ).in_("instance_id", instance_ids).order("time_stamp", desc=True).limit(5).execute()).data or []
-        extra["recent_scores"] = recent_scores
+    upcoming_q = admin.table("sessions").select("id, session_date, status, patient_id, doctor_id").in_(
+        "status", ["scheduled", "in_progress"]
+    ).order("session_date", desc=False).limit(5)
+    if clinic_id:
+        upcoming_q = upcoming_q.eq("clinic_id", clinic_id)
+    upcoming_sessions = (await upcoming_q.execute()).data or []
 
     return success_response({
-        "role": role,
+        "role": "receptionist",
         "patients_summary": {
             "total": len(patients),
             "pending_assessments": pending_count,
             "pending_approval": pending_approval_count,
             "registered_today": registered_today,
         },
-        **extra,
+        "upcoming_sessions": upcoming_sessions,
     })
 
 
@@ -125,7 +107,7 @@ async def list_patients(
     search: Optional[str] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    current_user: dict = Depends(require_staff),
+    current_user: dict = Depends(require_receptionist),
 ):
     admin = get_supabase_admin()
     clinic_id = current_user.get("clinic_id")
@@ -154,7 +136,7 @@ async def list_pending_patients(
     request: Request,
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    current_user: dict = Depends(require_staff),
+    current_user: dict = Depends(require_receptionist),
 ):
     admin = get_supabase_admin()
     clinic_id = current_user.get("clinic_id")
@@ -183,7 +165,7 @@ async def list_pending_patients(
 async def approve_patient(
     request: Request,
     patient_id: str,
-    current_user: dict = Depends(require_staff),
+    current_user: dict = Depends(require_receptionist),
 ):
     admin = get_supabase_admin()
     clinic_id = current_user.get("clinic_id")
@@ -220,7 +202,7 @@ async def reject_patient(
     request: Request,
     patient_id: str,
     body: Optional[RejectPatientRequest] = None,
-    current_user: dict = Depends(require_staff),
+    current_user: dict = Depends(require_receptionist),
 ):
     admin = get_supabase_admin()
     clinic_id = current_user.get("clinic_id")
@@ -267,11 +249,8 @@ class RegisterPatientRequest(BaseModel):
 async def register_patient(
     request: Request,
     body: RegisterPatientRequest,
-    current_user: dict = Depends(require_staff),
+    current_user: dict = Depends(require_receptionist),
 ):
-    if current_user["role"] == "clinical_assistant":
-        raise ForbiddenError("Clinical assistants cannot register patients")
-
     if not body.date_of_birth:
         raise BadRequestError("Date of birth is required for patient registration.")
 
@@ -359,11 +338,10 @@ async def register_patient(
 async def get_patient_detail(
     request: Request,
     patient_id: str,
-    current_user: dict = Depends(require_staff),
+    current_user: dict = Depends(require_receptionist),
 ):
     admin = get_supabase_admin()
     clinic_id = current_user.get("clinic_id")
-    role = current_user["role"]
 
     patient = await _row(admin, "patients", "id", patient_id)
     if not patient:
@@ -377,35 +355,15 @@ async def get_patient_detail(
         "patient_id", patient_id
     ).order("session_date", desc=True).limit(10).execute()).data or []
 
-    result = {
+    return success_response({
         "patient": {**patient, **profile},
         "recent_sessions": recent_sessions,
-    }
-
-    if role == "clinical_assistant":
-        permissions = (await admin.table("assessment_permissions").select(
-            "*, prs_diseases(disease_id, disease_name)"
-        ).eq("patient_id", patient_id).order("granted_at", desc=True).execute()).data or []
-
-        instances = (await admin.table("prs_assessment_instances").select("instance_id").eq(
-            "patient_id", patient_id
-        ).execute()).data or []
-        instance_ids = [i["instance_id"] for i in instances]
-        scores_summary = []
-        if instance_ids:
-            scores_summary = (await admin.table("prs_final_results").select(
-                "calculated_value, max_possible, overall_severity, overall_severity_label, time_stamp"
-            ).in_("instance_id", instance_ids).order("time_stamp", desc=True).limit(10).execute()).data or []
-
-        result["permissions"] = permissions
-        result["scores_summary"] = scores_summary
-
-    return success_response(result)
+    })
 
 
 @router.get("/doctors")
 @limiter.limit("60/minute")
-async def list_doctors(request: Request, current_user: dict = Depends(require_staff)):
+async def list_doctors(request: Request, current_user: dict = Depends(require_receptionist)):
     admin = get_supabase_admin()
     clinic_id = current_user.get("clinic_id")
 

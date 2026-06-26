@@ -14,6 +14,7 @@ import anamnesisReducer from "./slices/anamnesisSlice";
 import notificationsReducer from "./slices/notificationsSlice";
 import doctorNotesReducer from "./slices/doctorNotesSlice";
 import appointmentRequestsReducer from "./slices/appointmentRequestsSlice";
+import clinicalAssistantReducer from "./slices/clinicalAssistantSlice";
 
 const combinedReducer = combineReducers({
   auth: authReducer,
@@ -31,6 +32,7 @@ const combinedReducer = combineReducers({
   notifications: notificationsReducer,
   doctorNotes: doctorNotesReducer,
   appointmentRequests: appointmentRequestsReducer,
+  clinicalAssistant: clinicalAssistantReducer,
 });
 
 type AppState = ReturnType<typeof combinedReducer>;

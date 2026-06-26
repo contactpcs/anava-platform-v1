@@ -12,3 +12,4 @@ export { doctorNotesService } from "./doctorNotes.service";
 export { anamnesisService } from "./anamnesis.service";
 export { usersService } from "./users.service";
 export { adminService } from "./admin.service";
+export { clinicalAssistantService } from "./clinicalAssistant.service";
