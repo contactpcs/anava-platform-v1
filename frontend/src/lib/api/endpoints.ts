@@ -19,6 +19,17 @@ export const ENDPOINTS = {
     PROFILE: "/users/me",
   },
 
+  // ─── Clinical Assistant ───
+  CLINICAL_ASSISTANT: {
+    DASHBOARD: "/clinical-assistant/dashboard",
+    PATIENTS: "/clinical-assistant/patients",
+    PATIENT: (patientId: string) => `/clinical-assistant/patients/${patientId}`,
+    PATIENT_RESULTS: (patientId: string) => `/clinical-assistant/patients/${patientId}/results`,
+    PATIENT_RESULT: (patientId: string, instanceId: string) =>
+      `/clinical-assistant/patients/${patientId}/results?instance_id=${encodeURIComponent(instanceId)}`,
+    GRANT_ASSESSMENT: (patientId: string) => `/clinical-assistant/patients/${patientId}/grant-assessment`,
+  },
+
   // ─── Doctors ───
   DOCTORS: {
     DASHBOARD: "/doctors/dashboard",

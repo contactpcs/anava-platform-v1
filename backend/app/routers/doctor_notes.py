@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
-from app.dependencies import require_doctor, require_patient
+from app.dependencies import require_doctor, require_patient, require_clinical_staff
 from app.database import get_supabase_admin
 from app.utils.responses import success_response
-from app.utils.exceptions import ForbiddenError, NotFoundError
+from app.utils.exceptions import NotFoundError
 from app.limiter import limiter
 
 router = APIRouter()
@@ -15,12 +15,21 @@ class NoteUpsert(BaseModel):
 
 @router.get("/patient/{patient_id}")
 @limiter.limit("60/minute")
-async def get_note(request: Request, patient_id: str, current_user: dict = Depends(require_doctor)):
+async def get_note(request: Request, patient_id: str, current_user: dict = Depends(require_clinical_staff)):
     admin = get_supabase_admin()
-    rows = (await admin.table("doctor_notes").select("*").eq(
-        "patient_id", patient_id
-    ).eq("doctor_id", current_user["id"]).limit(1).execute()).data
-    return success_response(rows[0] if rows else None)
+    role = current_user["role"]
+    if role in ("doctor", "admin"):
+        # Doctor sees only their own notes for this patient
+        rows = (await admin.table("doctor_notes").select("*").eq(
+            "patient_id", patient_id
+        ).eq("doctor_id", current_user["id"]).limit(1).execute()).data
+        return success_response(rows[0] if rows else None)
+    else:
+        # CA sees all doctors' notes for this patient (read-only)
+        rows = (await admin.table("doctor_notes").select(
+            "*, profiles!doctor_id(full_name)"
+        ).eq("patient_id", patient_id).order("updated_at", desc=True).execute()).data or []
+        return success_response(rows)
 
 
 @router.get("/me")

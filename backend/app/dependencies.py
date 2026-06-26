@@ -171,6 +171,8 @@ require_receptionist = require_role(["receptionist", "admin"])
 require_staff = require_role(["doctor", "clinical_assistant", "receptionist", "admin"])
 # Schedule/slot endpoints: every role except patient. Patient never sees the doctor schedule.
 require_staff_or_doctor = require_role(["doctor", "clinical_assistant", "receptionist", "admin"])
+# Clinical read access: doctor + CA + admin (excludes receptionist from clinical data)
+require_clinical_staff = require_role(["doctor", "clinical_assistant", "admin"])
 
 
 def require_service_key(x_service_key: str = Header(..., alias="X-Service-Key")) -> None:

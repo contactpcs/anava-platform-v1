@@ -61,12 +61,19 @@ export const adminService = {
   },
 
   async registerStaff(payload: RegisterStaffPayload): Promise<AdminStaffMember> {
-    const res = await apiClient.post(ENDPOINTS.ADMIN.REGISTER_STAFF, payload);
+    const { first_name, last_name, ...rest } = payload;
+    const body = { full_name: `${first_name} ${last_name}`.trim(), ...rest };
+    const res = await apiClient.post(ENDPOINTS.ADMIN.REGISTER_STAFF, body);
     return res.data.data ?? res.data;
   },
 
   async updateStaff(id: string, payload: Partial<RegisterStaffPayload>): Promise<AdminStaffMember> {
-    const res = await apiClient.put(ENDPOINTS.ADMIN.STAFF_MEMBER(id), payload);
+    const { first_name, last_name, ...rest } = payload;
+    const body: Record<string, unknown> = { ...rest };
+    if (first_name !== undefined || last_name !== undefined) {
+      body.full_name = `${first_name ?? ""} ${last_name ?? ""}`.trim();
+    }
+    const res = await apiClient.put(ENDPOINTS.ADMIN.STAFF_MEMBER(id), body);
     return res.data.data ?? res.data;
   },
 

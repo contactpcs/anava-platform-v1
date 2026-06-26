@@ -103,7 +103,12 @@ function StaffForm({ initial, clinicOptions, onSubmit, onClose, isEdit }: StaffF
       await onSubmit(form);
       onClose();
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Failed to save staff member");
+      const detail = err?.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        setError(detail.map((e: any) => e?.msg ?? String(e)).join("; "));
+      } else {
+        setError(typeof detail === "string" ? detail : "Failed to save staff member");
+      }
     } finally {
       setLoading(false);
     }
